@@ -1,13 +1,13 @@
 #!/bin/bash
 
 cargo build --release
-touch rust.txt
+touch heap.txt
 
-for elements in 100000 1000000 2000000 9000000 10000000 2600000000; do
-  echo '' >> rust.txt
+for elements in 100000 1000000 2000000 9000000 10000000 260000000; do
+  echo '' >> heap.txt
   for threads in  8  7  6  5  4  3  2  1; do
-    echo "$elements $threads" >> rust.txt
-    ./target/release/heapsort $elements $threads false >> rust.txt
+    echo "$elements $threads" >> heap.txt
+    ./target/release/heapsort $elements $threads false >> heap.txt
   done
 done
 
