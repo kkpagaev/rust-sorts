@@ -46,6 +46,69 @@ mod tests {
     }
 }
 
+fn quick_sort(arr: &mut [&str], low: isize, high: isize) {
+    if low < high {
+        let p = partition(arr, low, high);
+        quick_sort(arr, low, p);
+        quick_sort(arr, p + 1, high);
+    }
+}
+
+fn partition(arr: &mut [&str], low: isize, high: isize) -> isize {
+    let pivot = arr[low as usize];
+
+    let mut i = low - 1;
+    let mut j = high + 1;
+
+    loop {
+        i += 1;
+        while arr[i as usize] < pivot {
+            i += 1;
+        }
+
+        j -= 1;
+        while arr[j as usize] > pivot {
+            j -= 1;
+        }
+
+        if i >= j {
+            return j;
+        }
+
+        arr.swap(i as usize, j as usize);
+    }
+}
+
+fn parallel_quick_sort(arr: &mut [&str], threads: usize) {
+    let chunks = std::cmp::min(arr.len(), threads);
+    let mut chunk_size = if arr.len() / chunks % 2 == 0 {
+        arr.len() / chunks
+    } else {
+        arr.len() / chunks + 1
+    };
+
+    thread::scope(|scope| {
+        for slice in arr.chunks_mut(chunk_size) {
+            scope.spawn(|| quick_sort(slice, 0, (slice.len() - 1) as isize));
+        }
+    });
+    let n = arr.len();
+
+    while chunk_size < n {
+        chunk_size *= 2;
+        thread::scope(|scope| {
+            for slice in arr.chunks_mut(chunk_size) {
+                scope.spawn(|| {
+                    let left = 0;
+                    let right = slice.len();
+                    let mid = chunk_size / 2 % right;
+                    merge(slice, left, mid, right)
+                });
+            }
+        });
+    }
+}
+
 fn parallel_heap_sort(arr: &mut [&str], threads: usize) {
     let chunks = std::cmp::min(arr.len(), threads);
     let mut chunk_size = if arr.len() / chunks % 2 == 0 {
@@ -121,7 +184,11 @@ fn main() {
     let num_threads = args[2].parse::<usize>().unwrap();
 
     let start_time = Instant::now();
-    parallel_heap_sort(&mut data, num_threads);
+    if args.get(4).is_some() {
+        parallel_quick_sort(&mut data, num_threads);
+    } else {
+        parallel_heap_sort(&mut data, num_threads);
+    }
     let end_time = Instant::now();
 
     if is_print {

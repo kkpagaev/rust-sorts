@@ -3,9 +3,17 @@
 cargo build --release
 touch heap.txt
 
-for elements in 100000 1000000 2000000 9000000 10000000 260000000; do
+for elements in 1 10 20 90 100 260 500 1000; do
+  elements=$((elements * 100000))
+  echo '' >> quick.txt
   echo '' >> heap.txt
+
   for threads in  8  7  6  5  4  3  2  1; do
+    echo "$elements $threads quick"
+    echo "$elements $threads" >> quick.txt
+    ./target/release/heapsort $elements $threads false quick >> quick.txt
+
+    echo "$elements $threads heap"
     echo "$elements $threads" >> heap.txt
     ./target/release/heapsort $elements $threads false >> heap.txt
   done
